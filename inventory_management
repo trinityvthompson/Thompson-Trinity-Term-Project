@@ -1,5 +1,37 @@
-import pandas as pd
-from collections import deque
+
+class Queue:
+    def __init__(self):
+        self.items = []
+
+    def is_empty(self):
+        """Check if the queue is empty."""
+        return len(self.items) == 0
+
+    def enqueue(self, item):
+        """Add an item to the end of the queue."""
+        self.items.append(item)
+
+    def dequeue(self):
+        """Remove an item from the front of the queue."""
+        if not self.is_empty():
+            return self.items.pop(0)
+        else:
+            return None
+
+    def size(self):
+        """Return the number of items in the queue."""
+        return len(self.items)
+
+    def front(self):
+        """Return the first item in the queue without removing it."""
+        if not self.is_empty():
+            return self.items[0]
+        else:
+            return None
+
+    def __str__(self):
+        """Return the string representation of the queue."""
+        return " -> ".join(str(item) for item in self.items)
 
 class Ingredient:
     def __init__(self, name, quantity, unit_price, reorder_threshold):
@@ -60,27 +92,24 @@ class Inventory:
 
     def check_inventory(self):
         """Check ingredients against reorder threshold and alert if low stock."""
-        reorder_queue = deque()
+        reorder_queue = Queue()
         for ingredient in self.ingredients.values():
             if ingredient.is_low():
-                reorder_queue.append(ingredient)
+                reorder_queue.enqueue(ingredient)
         return reorder_queue
 
     def process_sales_data(self, sales_file):
-        """Process sales data from a file and update inventory."""
-        sales_data = pd.read_csv(sales_file)  # Read the CSV file into a pandas DataFrame
-        for index, row in sales_data.iterrows():
-            dish_name = row['Dish']
-            quantity_sold = row['Quantity Sold']
-            self.process_order(dish_name, quantity_sold)
+        """Process sales data from a .txt file and update inventory."""
+        with open(sales_file, 'r') as file:
+            for line in file.readlines()[1:]:  # Skip the header line
+                date, dish_name, quantity_sold = line.strip().split(',')
+                self.process_order(dish_name, int(quantity_sold))
 
     def process_dishes_data(self, dishes_file):
         """Process dishes data (dishes and their ingredients) from a file."""
-        dishes_data = pd.read_csv(dishes_file)
-        for index, row in dishes_data.iterrows():
-            dish_name = row['Dish']
-            ingredient_name = row['Ingredient']
-            quantity_needed = row['Quantity']
+        with open(dishes_file, 'r') as file:
+            for line in file.readlines()[1:]:  # Skip the header line
+                dish_name, ingredient_name, quantity_needed = line.strip().split(',')
 
             # If the ingredient exists, use it; otherwise, create a new one
             if ingredient_name not in self.ingredients:
@@ -98,3 +127,32 @@ class Inventory:
 
             # Add ingredient to the dish's ingredient list
             menu_item.ingredients.append((ingredient, quantity_needed))
+
+def __main__():
+    # Creating sample ingredients and dishes
+    ingredient1 = Ingredient("Bun", 100, 0.5, 20)
+    ingredient2 = Ingredient("Cheese", 50, 1.0, 10)
+    ingredient3 = Ingredient("Beef Patty", 60, 2.5, 15)
+
+    dish1 = MenuItem("Cheeseburger", [(ingredient1, 1), (ingredient2, 1), (ingredient3, 1)])
+    dish2 = MenuItem("Veggie Burger", [(ingredient1, 1), (ingredient2, 1)])
+
+    # Initialize inventory
+    inventory = Inventory()
+    inventory.add_ingredient(ingredient1)
+    inventory.add_ingredient(ingredient2)
+    inventory.add_ingredient(ingredient3)
+    inventory.add_dish(dish1)
+    inventory.add_dish(dish2)
+
+    # Simulate processing sales data (here we manually add orders)
+    inventory.process_order("Cheeseburger", 2)
+    inventory.process_order("Veggie Burger", 5)
+
+    # Check low stock ingredients
+    reorder_queue = inventory.check_inventory()
+    print("Low Stock Alert Queue:")
+    while not reorder_queue.is_empty():
+        ingredient = reorder_queue.dequeue()
+        print(f"Reorder Needed: {ingredient}")
+
