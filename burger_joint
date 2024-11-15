@@ -3,7 +3,7 @@ class Ingredient:
         self.name = name
         self.quantity = quantity
         self.price = price
-
+    
     def __str__(self):
         return f"{self.name} - {self.quantity} units at ${self.price} each"
 
@@ -11,20 +11,20 @@ class Inventory:
     def __init__(self):
         # Dictionary to store ingredients by name
         self.ingredients = {}
-
+    
     def add_ingredient(self, ingredient):
         """Add an ingredient to the inventory."""
         if ingredient.name in self.ingredients:
             self.ingredients[ingredient.name].quantity += ingredient.quantity
         else:
             self.ingredients[ingredient.name] = ingredient
-
+    
     def update_inventory(self, ingredient_name, quantity_used):
         """Update the inventory by reducing the ingredient's quantity."""
         if ingredient_name in self.ingredients:
             self.ingredients[ingredient_name].quantity -= quantity_used
             print(f"{ingredient_name} updated. Current stock: {self.ingredients[ingredient_name].quantity} units.")
-
+    
     def check_inventory(self):
         """Check and print the current inventory status."""
         print("\nInventory Status:")
@@ -71,25 +71,26 @@ class Inventory:
             print(ingredient)
 
 class Order:
-    def __init__(self, order_id, burger_type):
-        """Order consists of an order ID and the selected burger type."""
+    def __init__(self, order_id, burger_type, quantity):
+        """Order consists of an order ID, the selected burger type, and the quantity."""
         self.order_id = order_id
         self.burger_type = burger_type
-        self.items = self.create_order_items(burger_type)
+        self.quantity = quantity
+        self.items = self.create_order_items(burger_type, quantity)
         self.status = "Pending"  # Default status is "Pending"
-
-    def create_order_items(self, burger_type):
+    
+    def create_order_items(self, burger_type, quantity):
         """Create the list of ingredients based on the burger type."""
         if burger_type == "veggie_burger":
-            return [("Lettuce", 1), ("Tomato", 1), ("Veggie Patty", 1), ("Bun", 1)]
+            return [("Lettuce", 1 * quantity), ("Tomato", 1 * quantity), ("Veggie Patty", 1 * quantity), ("Bun", 1 * quantity)]
         elif burger_type == "cheeseburger":
-            return [("Lettuce", 1), ("Tomato", 1), ("Beef Patty", 1), ("Cheese", 1), ("Bun", 1)]
+            return [("Lettuce", 1 * quantity), ("Tomato", 1 * quantity), ("Beef Patty", 1 * quantity), ("Cheese", 1 * quantity), ("Bun", 1 * quantity)]
         else:
             return []
-
+    
     def process_order(self, inventory):
         """Process the order by updating the inventory and printing the order details."""
-        print(f"\nProcessing Order {self.order_id}: {self.burger_type.replace('_', ' ').title()}")
+        print(f"\nProcessing Order {self.order_id}: {self.burger_type.replace('_', ' ').title()} (Quantity: {self.quantity})")
         for item in self.items:
             ingredient_name, quantity = item
             print(f"Using {quantity} units of {ingredient_name}")
@@ -98,18 +99,18 @@ class Order:
 
     def __str__(self):
         """Return the string representation of the order with status."""
-        return f"Order {self.order_id}: {self.burger_type.replace('_', ' ').title()} - Status: {self.status}"
+        return f"Order {self.order_id}: {self.burger_type.replace('_', ' ').title()} - Quantity: {self.quantity} - Status: {self.status}"
 
 class Queue:
     def __init__(self):
         """Custom Queue implementation using a list."""
         self.queue = []
-
+    
     def add_order(self, order):
         """Add an order to the queue."""
         self.queue.append(order)
         print(f"Current Queue (after adding Order {order.order_id}): {[str(o) for o in self.queue]}")
-
+    
     def process_next_order(self, inventory):
         """Process the next order in the queue (FIFO)."""
         if self.queue:
@@ -125,19 +126,19 @@ class Restaurant:
         """The main restaurant class to handle orders and inventory."""
         self.inventory = Inventory()
         self.order_queue = Queue()
-
+    
     def add_ingredient(self, name, quantity, price):
         """Add a new ingredient to the inventory."""
         new_ingredient = Ingredient(name, quantity, price)
         self.inventory.add_ingredient(new_ingredient)
-
+    
     def show_inventory(self):
         """Show the current inventory."""
         self.inventory.check_inventory()
 
-    def place_order(self, order_id, burger_type):
-        """Place an order by specifying the burger type."""
-        new_order = Order(order_id, burger_type)
+    def place_order(self, order_id, burger_type, quantity):
+        """Place an order by specifying the burger type and quantity."""
+        new_order = Order(order_id, burger_type, quantity)
         self.order_queue.add_order(new_order)
 
     def process_orders(self):
@@ -172,6 +173,11 @@ def main():
             print("1. Veggie Burger")
             print("2. Cheeseburger")
             burger_choice = input("Enter burger choice (1 or 2): ")
+            try:
+                quantity = int(input("Enter quantity: "))
+            except ValueError:
+                print("Invalid quantity! Please enter a number.")
+                continue
 
             if burger_choice == "1":
                 burger_type = "veggie_burger"
@@ -180,10 +186,10 @@ def main():
             else:
                 print("Invalid choice! Please try again.")
                 continue
-
+            
             order_id = len(restaurant.order_queue.queue) + 1
-            restaurant.place_order(order_id, burger_type)
-
+            restaurant.place_order(order_id, burger_type, quantity)
+        
         elif choice == "2":
             restaurant.show_inventory()
 
@@ -201,7 +207,7 @@ def main():
         elif choice == "6":
             print("Thank you for visiting! Goodbye.")
             break
-
+        
         else:
             print("Invalid choice! Please try again.")
 
