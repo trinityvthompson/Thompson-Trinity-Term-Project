@@ -1,0 +1,210 @@
+class Ingredient:
+    def __init__(self, name, quantity, price):
+        self.name = name
+        self.quantity = quantity
+        self.price = price
+
+    def __str__(self):
+        return f"{self.name} - {self.quantity} units at ${self.price} each"
+
+class Inventory:
+    def __init__(self):
+        # Dictionary to store ingredients by name
+        self.ingredients = {}
+
+    def add_ingredient(self, ingredient):
+        """Add an ingredient to the inventory."""
+        if ingredient.name in self.ingredients:
+            self.ingredients[ingredient.name].quantity += ingredient.quantity
+        else:
+            self.ingredients[ingredient.name] = ingredient
+
+    def update_inventory(self, ingredient_name, quantity_used):
+        """Update the inventory by reducing the ingredient's quantity."""
+        if ingredient_name in self.ingredients:
+            self.ingredients[ingredient_name].quantity -= quantity_used
+            print(f"{ingredient_name} updated. Current stock: {self.ingredients[ingredient_name].quantity} units.")
+
+    def check_inventory(self):
+        """Check and print the current inventory status."""
+        print("\nInventory Status:")
+        for ingredient in self.ingredients.values():
+            print(ingredient)
+
+    def merge_sort(self, ingredients_list):
+        """Sort ingredients list by quantity in descending order using merge sort."""
+        if len(ingredients_list) > 1:
+            mid = len(ingredients_list) // 2
+            left_half = ingredients_list[:mid]
+            right_half = ingredients_list[mid:]
+
+            self.merge_sort(left_half)
+            self.merge_sort(right_half)
+
+            i = j = k = 0
+
+            while i < len(left_half) and j < len(right_half):
+                if left_half[i].quantity > right_half[j].quantity:
+                    ingredients_list[k] = left_half[i]
+                    i += 1
+                else:
+                    ingredients_list[k] = right_half[j]
+                    j += 1
+                k += 1
+
+            while i < len(left_half):
+                ingredients_list[k] = left_half[i]
+                i += 1
+                k += 1
+
+            while j < len(right_half):
+                ingredients_list[k] = right_half[j]
+                j += 1
+                k += 1
+
+    def sort_inventory(self):
+        """Sort the inventory by quantity using merge sort."""
+        ingredients_list = list(self.ingredients.values())  # Convert inventory dict values to a list
+        self.merge_sort(ingredients_list)  # Sort the list
+        print("\nSorted Inventory by Stock (Descending):")
+        for ingredient in ingredients_list:
+            print(ingredient)
+
+class Order:
+    def __init__(self, order_id, burger_type):
+        """Order consists of an order ID and the selected burger type."""
+        self.order_id = order_id
+        self.burger_type = burger_type
+        self.items = self.create_order_items(burger_type)
+        self.status = "Pending"  # Default status is "Pending"
+
+    def create_order_items(self, burger_type):
+        """Create the list of ingredients based on the burger type."""
+        if burger_type == "veggie_burger":
+            return [("Lettuce", 1), ("Tomato", 1), ("Veggie Patty", 1), ("Bun", 1)]
+        elif burger_type == "cheeseburger":
+            return [("Lettuce", 1), ("Tomato", 1), ("Beef Patty", 1), ("Cheese", 1), ("Bun", 1)]
+        else:
+            return []
+
+    def process_order(self, inventory):
+        """Process the order by updating the inventory and printing the order details."""
+        print(f"\nProcessing Order {self.order_id}: {self.burger_type.replace('_', ' ').title()}")
+        for item in self.items:
+            ingredient_name, quantity = item
+            print(f"Using {quantity} units of {ingredient_name}")
+            inventory.update_inventory(ingredient_name, quantity)
+        self.status = "Processed"  # Update order status to "Processed"
+
+    def __str__(self):
+        """Return the string representation of the order with status."""
+        return f"Order {self.order_id}: {self.burger_type.replace('_', ' ').title()} - Status: {self.status}"
+
+class Queue:
+    def __init__(self):
+        """Custom Queue implementation using a list."""
+        self.queue = []
+
+    def add_order(self, order):
+        """Add an order to the queue."""
+        self.queue.append(order)
+        print(f"Current Queue (after adding Order {order.order_id}): {[str(o) for o in self.queue]}")
+
+    def process_next_order(self, inventory):
+        """Process the next order in the queue (FIFO)."""
+        if self.queue:
+            next_order = self.queue.pop(0)  # FIFO - First In First Out
+            print(f"Processing Order {next_order.order_id} (Queue before processing): {[str(o) for o in self.queue]}")
+            next_order.process_order(inventory)
+            print(f"Queue after processing Order {next_order.order_id}: {[str(o) for o in self.queue]}")
+        else:
+            print("No orders to process.")
+
+class Restaurant:
+    def __init__(self):
+        """The main restaurant class to handle orders and inventory."""
+        self.inventory = Inventory()
+        self.order_queue = Queue()
+
+    def add_ingredient(self, name, quantity, price):
+        """Add a new ingredient to the inventory."""
+        new_ingredient = Ingredient(name, quantity, price)
+        self.inventory.add_ingredient(new_ingredient)
+
+    def show_inventory(self):
+        """Show the current inventory."""
+        self.inventory.check_inventory()
+
+    def place_order(self, order_id, burger_type):
+        """Place an order by specifying the burger type."""
+        new_order = Order(order_id, burger_type)
+        self.order_queue.add_order(new_order)
+
+    def process_orders(self):
+        """Process all orders in the queue."""
+        while self.order_queue.queue:
+            self.order_queue.process_next_order(self.inventory)
+
+# Simulating restaurant operations with an interactive menu
+def main():
+    restaurant = Restaurant()
+
+    # Add initial ingredients
+    restaurant.add_ingredient("Lettuce", 100, 0.5)
+    restaurant.add_ingredient("Tomato", 100, 0.4)
+    restaurant.add_ingredient("Veggie Patty", 50, 1.0)
+    restaurant.add_ingredient("Beef Patty", 60, 1.2)
+    restaurant.add_ingredient("Cheese", 80, 0.8)
+    restaurant.add_ingredient("Bun", 150, 0.3)
+
+    while True:
+        print("\n--- Restaurant Order Menu ---")
+        print("1. Place Order")
+        print("2. Check Inventory")
+        print("3. Show Inventory (Sorted by Stock)")
+        print("4. Show Queue")
+        print("5. Process Orders")
+        print("6. Exit")
+        choice = input("Enter your choice (1-6): ")
+
+        if choice == "1":
+            print("\n--- Menu ---")
+            print("1. Veggie Burger")
+            print("2. Cheeseburger")
+            burger_choice = input("Enter burger choice (1 or 2): ")
+
+            if burger_choice == "1":
+                burger_type = "veggie_burger"
+            elif burger_choice == "2":
+                burger_type = "cheeseburger"
+            else:
+                print("Invalid choice! Please try again.")
+                continue
+
+            order_id = len(restaurant.order_queue.queue) + 1
+            restaurant.place_order(order_id, burger_type)
+
+        elif choice == "2":
+            restaurant.show_inventory()
+
+        elif choice == "3":
+            restaurant.inventory.sort_inventory()
+
+        elif choice == "4":
+            print("\nCurrent Queue:")
+            for order in restaurant.order_queue.queue:
+                print(order)
+
+        elif choice == "5":
+            restaurant.process_orders()
+
+        elif choice == "6":
+            print("Thank you for visiting! Goodbye.")
+            break
+
+        else:
+            print("Invalid choice! Please try again.")
+
+# Run the restaurant system
+if __name__ == "__main__":
+    main()
